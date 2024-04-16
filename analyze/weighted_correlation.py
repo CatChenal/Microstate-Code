@@ -1,11 +1,11 @@
 import numpy as np
-
 import pandas as pd
 from scipy.stats import rankdata
 
+
 class WeightedCorr:
     def __init__(self, xyw=None, x=None, y=None, w=None, df=None, wcol=None):
-        ''' Weighted Correlation class. Either supply xyw, (x, y, w), or (df, wcol). Call the class to get the result, i.e.:
+        """Weighted Correlation class. Either supply xyw, (x, y, w), or (df, wcol). Call the class to get the result, i.e.:
         WeightedCorr(xyw=mydata[[x, y, w]])(method='pearson')
         :param xyw: pd.DataFrame with shape(n, 3) containing x, y, and w columns (column names irrelevant)
         :param x: pd.Series (n, ) containing values for x
@@ -13,7 +13,8 @@ class WeightedCorr:
         :param w: pd.Series (n, ) containing weights
         :param df: pd.Dataframe (n, m+1) containing m phenotypes and a weight column
         :param wcol: str column of the weight column in the dataframe passed to the df argument.
-        '''
+        """
+
         if (df is None) and (wcol is None):
             if np.all([i is None for i in [xyw, x, y, w]]):
                 raise ValueError('No data supplied')

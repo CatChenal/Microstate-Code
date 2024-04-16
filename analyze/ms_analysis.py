@@ -3,6 +3,7 @@
 import sys
 import math
 import operator
+import pandas as pd
 from typing import Union
 from pathlib import Path
 import numpy as np
@@ -14,7 +15,7 @@ Kcal2kT = 1.688
 
 
 class Microstate:
-    """Sortable class for microstates."""
+    """Sortable class for mcce microstates."""
 
     def __init__(self, state: list, E: float, count: int):
         self.state = state
@@ -517,12 +518,12 @@ def ms_energy_stat(microstates):
     Given a list of microstates, find the lowest energy, average energy, and highest energy
     """
     ms = next(iter(microstates))
-    lowerst_E = highest_E = ms.E
+    lowest_E = highest_E = ms.E
     N_ms = 0
     total_E = 0.0
     for ms in microstates:
-        if lowerst_E > ms.E:
-            lowerst_E = ms.E
+        if lowest_E > ms.E:
+            lowest_E = ms.E
         elif highest_E < ms.E:
             highest_E = ms.E
         N_ms += ms.count
@@ -530,7 +531,7 @@ def ms_energy_stat(microstates):
 
     average_E = total_E/N_ms
 
-    return lowerst_E, average_E, highest_E
+    return lowest_E, average_E, highest_E
 
 
 def ms_convert2occ(microstates):
@@ -588,6 +589,7 @@ def e2occ(energies):
 
 
 def bhata_distance(prob1, prob2):
+    """Bhattacharyya distance between 2 probability distributions."""
     d_max = 10000.0   # Max possible value set to this
     p1 = np.array((prob1)) / sum(prob1)
     p2 = np.array((prob2)) / sum(prob2)
@@ -595,7 +597,6 @@ def bhata_distance(prob1, prob2):
         d = d_max
     else:
         bc = sum(np.sqrt(p1 * p2))
-    #    print(bc, np.exp(-d_max))
         if bc <= np.exp(-d_max):
             d = d_max
         else:
@@ -606,6 +607,7 @@ def bhata_distance(prob1, prob2):
 
 def whatchanged_conf(msgroup1, msgroup2):
     "Given two group of microstates, calculate what changed at conformer level."
+
     occ1 = ms_convert2occ(msgroup1)
     occ2 = ms_convert2occ(msgroup2)
 
@@ -626,8 +628,36 @@ def whatchanged_conf(msgroup1, msgroup2):
     return diff_occ
 
 
+def free_residues_df(free_res:list, conformers:list) -> pd.DataFrame:
+    """
+    Return the free residues' ids in a pandas DataFrame.
+    """
+    free_residues = [conformers[res[0]].resid for res in free_res]
+
+    return pd.DataFrame(free_residues, columns=["FreeRes"])
+
+
+def fixed_residues_charge(conformers:list, fixed_iconfs:list) -> tuple:
+    """Return the net charge contributed by the fixed residues
+    and the fixed_res_crg_dict.
+    """
+
+    fixed_res_crg_dict = {}
+    for conf in conformers:
+        if conf.iconf in fixed_iconfs:
+            if conf.resid not in fixed_res_crg_dict.keys():
+                fixed_res_crg_dict[conf.resid] = conf.crg
+            else:
+                print(f"ERROR: duplicated fixed residue: {conf.resid!r}")
+
+    net_charge = sum(fixed_res_crg_dict.values())
+
+    return net_charge, fixed_res_crg_dict
+
+
 def whatchanged_res(msgroup1, msgroup2, free_res):
-    "Return a list of Bhatachaya Distance of free residues."
+    "Return a list of Bhattacharyya distance of free residues."
+
     occ1 = ms_convert2occ(msgroup1)
     occ2 = ms_convert2occ(msgroup2)
 
@@ -650,6 +680,7 @@ def whatchanged_res(msgroup1, msgroup2, free_res):
 
 
 if __name__ == "__main__":
+
     msout = MSout("ms_out/pH4eH0ms.txt")
     # e_step = (msout.highest_E - msout.lowest_E)/20
     # ticks = [msout.lowest_E + e_step*(i) for i in range(20)]
