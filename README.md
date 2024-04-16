@@ -10,7 +10,7 @@ modules around, rather, you define paths to your data and run the analysis from 
 
 
 ### New Notebook:
- * `charg_ms.py`: Provides a start for getting to know MCCE structures; 'MCCE to MD' project.
+ * `charg_ms.ipynb`: Provides a start for getting to know MCCE structures; 'MCCE to MD' project.
 
 
 ### New modules:
